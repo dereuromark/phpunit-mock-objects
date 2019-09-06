@@ -1106,7 +1106,7 @@ class Generator
                     }
                 }
 
-                if ($parameter->hasType() && (string) $parameter->getType() !== 'self') {
+                if ($parameter->hasType() && $parameter->getType() && $parameter->getType()->getName() !== 'self') {
                     $typeDeclaration = $typeStr . ' ';
                 } elseif ($parameter->isArray()) {
                     $typeDeclaration = 'array ';
