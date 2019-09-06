@@ -18,6 +18,7 @@ use PHPUnit\Util\InvalidArgumentHelper;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
+use ReflectionParameter;
 use SoapClient;
 use Text_Template;
 use Traversable;
