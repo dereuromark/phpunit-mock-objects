@@ -915,10 +915,15 @@ class Generator
             $reference = '';
         }
 
+        $returnType = '';
         if ($method->hasReturnType()) {
-            $returnType = (string) $method->getReturnType();
-        } else {
-            $returnType = '';
+            $returnTypeObj = $method->getReturnType();
+            if ($returnTypeObj instanceof \ReflectionNamedType) {
+                $returnType = $returnTypeObj->getName();
+            } elseif (version_compare(PHP_VERSION, '7.1', '<')) {
+                // Special case for 7.0 / 5.6  before ReturnType::__toString() was deprecated
+                $returnType = (string) $returnTypeObj;
+            }
         }
 
         if (\preg_match('#\*[ \t]*+@deprecated[ \t]*+(.*?)\r?+\n[ \t]*+\*(?:[ \t]*+@|/$)#s', $method->getDocComment(), $deprecation)) {
@@ -1082,12 +1087,26 @@ class Generator
             $typeDeclaration = '';
 
             if (!$forCall) {
-                if (PHP_VERSION_ID >= 70100 && $parameter->hasType() && $parameter->allowsNull()) {
-                    $nullable = '?';
+                $typeStr = null;
+                if ($this->hasType($parameter)) {
+                    $typeObj = $parameter->getType();
+                    if (version_compare(PHP_VERSION, '7.1', '<')) {
+                        $typeStr = (string) $typeObj;
+                    } elseif ($typeObj instanceof \ReflectionNamedType) {
+                        $typeStr = $typeObj->getName();
+                    }
+                }
+                if ($typeStr !== null && $typeStr !== 'self') {
+                    if (version_compare(PHP_VERSION, '7.1', '>=')
+                        && $parameter->allowsNull()
+                        && !$parameter->isVariadic()
+                    ) {
+                        $nullable = '?';
+                    }
                 }
 
                 if ($parameter->hasType() && (string) $parameter->getType() !== 'self') {
-                    $typeDeclaration = (string) $parameter->getType() . ' ';
+                    $typeDeclaration = $typeStr . ' ';
                 } elseif ($parameter->isArray()) {
                     $typeDeclaration = 'array ';
                 } elseif ($parameter->isCallable()) {
@@ -1139,6 +1158,18 @@ class Generator
         }
 
         return \implode(', ', $parameters);
+    }
+
+    /**
+     * @param ReflectionParameter $parameter
+     *
+     * @return bool
+     *
+     * @since  Method available since Release 2.3.4
+     */
+    private function hasType(ReflectionParameter $parameter)
+    {
+        return method_exists(ReflectionParameter::class, 'hasType') && $parameter->hasType();
     }
 
     /**
