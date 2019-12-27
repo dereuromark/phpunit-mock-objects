@@ -5,3 +5,5 @@
 # phpunit-mock-objects
 
 **phpunit-mock-objects** is the default mock object library for PHPUnit.
+
+This hack is not needed anymore after https://github.com/cakephp/cakephp/pull/14061 is released as 3.8.x patch.
